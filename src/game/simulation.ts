@@ -71,18 +71,44 @@ export const simulateTick = (state: GameState): GameState => {
 
   citizens = citizens.map((citizen) => assignCitizen({ ...state, citizens }, citizen));
 
-  const rentIncome = citizens.length * BUILDING_RULES.house.rent;
-  const employed = citizens.filter((citizen) => citizen.workplaceId).length;
-  const wagesPaid = employed * BUILDING_RULES.workplace.wage;
-  const diners = citizens.filter((citizen) => citizen.restaurantId).length;
-  const restaurantSpending = diners * BUILDING_RULES.restaurant.spend;
-  const money = state.money + rentIncome + restaurantSpending - wagesPaid;
+  let rentIncome = 0;
+  let wagesPaid = 0;
+  let payrollTaxIncome = 0;
+  let restaurantSpending = 0;
+  let foodTaxIncome = 0;
+
+  citizens = citizens.map((citizen) => {
+    let citizenMoney = citizen.money;
+
+    if (citizen.workplaceId) {
+      citizenMoney += BUILDING_RULES.workplace.wage;
+      wagesPaid += BUILDING_RULES.workplace.wage;
+      payrollTaxIncome += BUILDING_RULES.workplace.payrollTax;
+    }
+
+    const rentPayment = Math.min(citizenMoney, BUILDING_RULES.house.rent);
+    citizenMoney -= rentPayment;
+    rentIncome += rentPayment;
+
+    if (citizen.restaurantId && citizenMoney >= BUILDING_RULES.restaurant.spend) {
+      citizenMoney -= BUILDING_RULES.restaurant.spend;
+      restaurantSpending += BUILDING_RULES.restaurant.spend;
+      foodTaxIncome += BUILDING_RULES.restaurant.foodTax;
+    }
+
+    return {
+      ...citizen,
+      money: citizenMoney,
+    };
+  });
+
+  const money = state.money + rentIncome + payrollTaxIncome + foodTaxIncome;
 
   return {
     ...state,
     citizens,
     money,
-    lastTick: { rentIncome, wagesPaid, restaurantSpending },
+    lastTick: { rentIncome, wagesPaid, payrollTaxIncome, restaurantSpending, foodTaxIncome },
     tick: state.tick + 1,
     updatedAt: Date.now(),
   };
@@ -99,7 +125,9 @@ export const getStats = (state: GameState): GameStats => {
     connectedToRegion,
     rentIncome: state.lastTick.rentIncome,
     wagesPaid: state.lastTick.wagesPaid,
+    payrollTaxIncome: state.lastTick.payrollTaxIncome,
     restaurantSpending: state.lastTick.restaurantSpending,
+    foodTaxIncome: state.lastTick.foodTaxIncome,
     money: state.money,
   };
 };

@@ -22,7 +22,9 @@ export const createNewGame = (seed = Math.floor(Math.random() * 100_000)): GameS
     lastTick: {
       rentIncome: 0,
       wagesPaid: 0,
+      payrollTaxIncome: 0,
       restaurantSpending: 0,
+      foodTaxIncome: 0,
     },
     tick: 0,
     createdAt: now,

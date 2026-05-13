@@ -1,12 +1,12 @@
 import type { GameState, SaveSlot, SerializedGame } from './types';
 
-export const SAVE_PREFIX = 'simple-city-builder:v1:save:';
-export const ACTIVE_SAVE_KEY = 'simple-city-builder:v1:active-save';
+export const SAVE_PREFIX = 'simple-city-builder:v2:save:';
+export const ACTIVE_SAVE_KEY = 'simple-city-builder:v2:active-save';
 
 const isStorageAvailable = (): boolean => typeof window !== 'undefined' && Boolean(window.localStorage);
 
 export const serializeGame = (state: GameState): SerializedGame => ({
-  version: 1,
+  version: 2,
   state: {
     ...state,
     updatedAt: Date.now(),
@@ -14,7 +14,7 @@ export const serializeGame = (state: GameState): SerializedGame => ({
 });
 
 export const deserializeGame = (serialized: SerializedGame): GameState => {
-  if (serialized.version !== 1) {
+  if (serialized.version !== 2) {
     throw new Error(`Unsupported save version: ${serialized.version}`);
   }
   return serialized.state;

@@ -196,8 +196,8 @@ export default function App() {
         <div className="economy-line">
           <CircleDollarSign size={16} />
           <span>Rent +{formatMoney(stats?.rentIncome ?? 0)}</span>
-          <span>Food +{formatMoney(stats?.restaurantSpending ?? 0)}</span>
-          <span>Wages -{formatMoney(stats?.wagesPaid ?? 0)}</span>
+          <span>Payroll tax +{formatMoney(stats?.payrollTaxIncome ?? 0)}</span>
+          <span>Food tax +{formatMoney(stats?.foodTaxIncome ?? 0)}</span>
         </div>
 
         <div className={`connection ${stats?.connectedToRegion ? 'connected' : ''}`}>

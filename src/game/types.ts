@@ -34,7 +34,9 @@ export interface Citizen {
 export interface EconomyTick {
   rentIncome: number;
   wagesPaid: number;
+  payrollTaxIncome: number;
   restaurantSpending: number;
+  foodTaxIncome: number;
 }
 
 export interface GameMap {
@@ -68,7 +70,9 @@ export interface GameStats {
   connectedToRegion: boolean;
   rentIncome: number;
   wagesPaid: number;
+  payrollTaxIncome: number;
   restaurantSpending: number;
+  foodTaxIncome: number;
   money: number;
 }
 
@@ -81,7 +85,7 @@ export interface SaveSlot {
 }
 
 export interface SerializedGame {
-  version: 1;
+  version: 2;
   state: GameState;
 }
 
@@ -95,13 +99,15 @@ export const BUILDING_RULES = {
   workplace: {
     label: 'Workplace',
     jobs: 8,
-    wage: 10,
+    wage: 14,
+    payrollTax: 3,
     cost: 280,
   },
   restaurant: {
     label: 'Restaurant',
     seats: 10,
     spend: 5,
+    foodTax: 1,
     cost: 220,
   },
 } as const;

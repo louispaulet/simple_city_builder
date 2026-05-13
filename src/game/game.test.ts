@@ -6,7 +6,7 @@ import { canPlaceBuilding, placeBuilding, placeRoad } from './placement';
 import { deserializeGame, serializeGame } from './save';
 import { getStats, simulateTick } from './simulation';
 import { getTile } from './terrain';
-import type { GameState, Position, Tile } from './types';
+import { BUILDING_RULES, type GameState, type Position, type Tile } from './types';
 
 const firstTile = (state: GameState, predicate: (tile: Tile) => boolean): Position => {
   const tile = state.map.tiles.find(predicate);
@@ -132,6 +132,24 @@ describe('simulation and connectivity', () => {
     expect(findRoadPath(ticked, house, workplace)).not.toBeNull();
   });
 
+  it('taxes workplace wages instead of paying them from city funds', () => {
+    let state = withMoney(createNewGame(44));
+    state = buildMainStreet(state);
+    const house = landNextToRoad(state, 1);
+    const workplace = landNextToRoad(state, house.x + 3);
+    state = placeBuilding(state, 'house', house).state;
+    state = placeBuilding(state, 'workplace', workplace).state;
+
+    const ticked = simulateTick(state);
+    const stats = getStats(ticked);
+
+    expect(stats.wagesPaid).toBe(stats.employed * BUILDING_RULES.workplace.wage);
+    expect(stats.wagesPaid).toBeGreaterThan(0);
+    expect(stats.payrollTaxIncome).toBe(stats.employed * BUILDING_RULES.workplace.payrollTax);
+    expect(ticked.money).toBe(state.money + stats.rentIncome + stats.payrollTaxIncome + stats.foodTaxIncome);
+    expect(ticked.citizens.every((citizen) => citizen.money >= 0)).toBe(true);
+  });
+
   it('tracks restaurant spending when homes can reach restaurants', () => {
     let state = withMoney(createNewGame(44));
     state = buildMainStreet(state);
@@ -141,8 +159,10 @@ describe('simulation and connectivity', () => {
     state = placeBuilding(state, 'restaurant', restaurant).state;
 
     const ticked = simulateTick(state);
+    const stats = getStats(ticked);
 
-    expect(getStats(ticked).restaurantSpending).toBeGreaterThan(0);
+    expect(stats.restaurantSpending).toBeGreaterThan(0);
+    expect(stats.foodTaxIncome).toBe((stats.restaurantSpending / BUILDING_RULES.restaurant.spend) * BUILDING_RULES.restaurant.foodTax);
     expect(ticked.money).toBeGreaterThan(state.money);
   });
 });
