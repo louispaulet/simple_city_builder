@@ -85,8 +85,23 @@ const createPeopleAndCars = (scene: Scene, game: GameState, root: TransformNode)
   });
 };
 
-const createCityContent = (scene: Scene, game: GameState): TransformNode => {
-  const content = new TransformNode('city-content', scene);
+const getLayoutSignature = (game: GameState): string =>
+  JSON.stringify({
+    seed: game.map.seed,
+    connection: game.map.connection,
+    buildings: game.buildings,
+    roads: game.roads,
+  });
+
+const getPopulationSignature = (game: GameState): string =>
+  JSON.stringify(
+    game.citizens
+      .slice(0, 42)
+      .map((citizen) => [citizen.id, citizen.homeId, citizen.mode]),
+  );
+
+const createLayoutContent = (scene: Scene, game: GameState): TransformNode => {
+  const content = new TransformNode('city-layout-content', scene);
   content.setEnabled(false);
 
   const landMaterial = makeMaterial(scene, 'land-material', new Color3(0.34, 0.56, 0.31));
@@ -121,6 +136,13 @@ const createCityContent = (scene: Scene, game: GameState): TransformNode => {
   connection.parent = content;
 
   createBuildingMesh(scene, game, content);
+
+  return content;
+};
+
+const createPopulationContent = (scene: Scene, game: GameState): TransformNode => {
+  const content = new TransformNode('city-population-content', scene);
+  content.setEnabled(false);
   createPeopleAndCars(scene, game, content);
 
   return content;
@@ -129,8 +151,11 @@ const createCityContent = (scene: Scene, game: GameState): TransformNode => {
 export function CityScene({ game, onTileSelected }: CitySceneProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<Scene | null>(null);
-  const contentRef = useRef<TransformNode | null>(null);
+  const layoutRef = useRef<TransformNode | null>(null);
+  const populationRef = useRef<TransformNode | null>(null);
   const onTileSelectedRef = useRef(onTileSelected);
+  const layoutSignature = getLayoutSignature(game);
+  const populationSignature = getPopulationSignature(game);
 
   useEffect(() => {
     onTileSelectedRef.current = onTileSelected;
@@ -142,7 +167,7 @@ export function CityScene({ game, onTileSelected }: CitySceneProps) {
       return undefined;
     }
 
-    const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }, true);
+    const engine = new Engine(canvas, true, { stencil: true }, true);
     const scene = new Scene(engine);
     scene.clearColor = new Color4(0.64, 0.78, 0.88, 1);
     sceneRef.current = scene;
@@ -157,8 +182,8 @@ export function CityScene({ game, onTileSelected }: CitySceneProps) {
     const light = new HemisphericLight('sun', new Vector3(0.3, 1, 0.2), scene);
     light.intensity = 0.92;
 
-    const content = new TransformNode('city-content-placeholder', scene);
-    contentRef.current = content;
+    layoutRef.current = new TransformNode('city-layout-placeholder', scene);
+    populationRef.current = new TransformNode('city-population-placeholder', scene);
 
     scene.onPointerObservable.add((event) => {
       if (event.type !== PointerEventTypes.POINTERPICK || !event.pickInfo?.hit || !event.pickInfo.pickedMesh) {
@@ -178,22 +203,36 @@ export function CityScene({ game, onTileSelected }: CitySceneProps) {
       window.removeEventListener('resize', resize);
       engine.dispose();
       sceneRef.current = null;
-      contentRef.current = null;
+      layoutRef.current = null;
+      populationRef.current = null;
     };
   }, []);
 
   useEffect(() => {
     const scene = sceneRef.current;
-    const oldContent = contentRef.current;
-    if (!scene || !oldContent) {
+    const oldLayout = layoutRef.current;
+    if (!scene || !oldLayout) {
       return;
     }
 
-    const nextContent = createCityContent(scene, game);
-    nextContent.setEnabled(true);
-    contentRef.current = nextContent;
-    oldContent.dispose(false, true);
-  }, [game]);
+    const nextLayout = createLayoutContent(scene, game);
+    nextLayout.setEnabled(true);
+    layoutRef.current = nextLayout;
+    oldLayout.dispose(false, true);
+  }, [layoutSignature]);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    const oldPopulation = populationRef.current;
+    if (!scene || !oldPopulation) {
+      return;
+    }
+
+    const nextPopulation = createPopulationContent(scene, game);
+    nextPopulation.setEnabled(true);
+    populationRef.current = nextPopulation;
+    oldPopulation.dispose(false, true);
+  }, [layoutSignature, populationSignature]);
 
   return <canvas ref={canvasRef} className="h-full w-full touch-none" aria-label="3D city map" />;
 }
