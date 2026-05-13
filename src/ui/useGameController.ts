@@ -16,6 +16,7 @@ export const useGameController = () => {
   const [message, setMessage] = useState('Connect homes to the regional marker with roads to attract people.');
   const [showSaves, setShowSaves] = useState(false);
   const [showNewCity, setShowNewCity] = useState(false);
+  const [showMenuConfirm, setShowMenuConfirm] = useState(false);
   const [cityNameDraft, setCityNameDraft] = useState('');
   const [statsOpen, setStatsOpen] = useState(true);
   const [bankOpen, setBankOpen] = useState(false);
@@ -84,16 +85,36 @@ export const useGameController = () => {
     setMessage(`${game.name} saved.`);
   };
 
+  const askForMainMenu = () => {
+    setShowMenuConfirm(true);
+  };
+
+  const returnToMainMenu = () => {
+    setGame(undefined);
+    setShowSaves(false);
+    setShowMenuConfirm(false);
+    setPage('menu');
+  };
+
+  const saveAndReturnToMainMenu = () => {
+    if (game) {
+      saveGame(game);
+      setSaves(listSaves());
+    }
+    returnToMainMenu();
+  };
+
   const askForNewCityName = () => {
     setCityNameDraft('');
     setShowNewCity(true);
   };
 
   return {
-    game, page, selectedTool, message, showSaves, showNewCity, cityNameDraft, statsOpen, bankOpen, saves, stats,
-    setPage, setSelectedTool, setShowSaves, setShowNewCity, setCityNameDraft,
+    game, page, selectedTool, message, showSaves, showNewCity, showMenuConfirm, cityNameDraft, statsOpen, bankOpen, saves, stats,
+    setPage, setSelectedTool, setShowSaves, setShowNewCity, setShowMenuConfirm, setCityNameDraft,
     setStatsOpen, setBankOpen, setGame, startNewGame, resume, openSaves, loadSave,
     handleTileSelected, handleRoadLineSelected, handleSave, askForNewCityName,
+    askForMainMenu, returnToMainMenu, saveAndReturnToMainMenu,
     handleBorrow: (amount: number) => game && applyResult(borrowMoney(game, amount)),
     handleRepay: (amount: number) => game && applyResult(repayDebt(game, amount)),
   };

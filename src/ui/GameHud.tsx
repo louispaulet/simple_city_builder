@@ -1,4 +1,4 @@
-import { MapPin, Save } from 'lucide-react';
+import { Home, MapPin, Save } from 'lucide-react';
 import type { GameState, GameStats, ToolKind } from '../game/types';
 import { BankPanel } from './BankPanel';
 import { formatMoney } from './format';
@@ -32,9 +32,14 @@ export function GameHud(props: GameHudProps) {
           <p className="eyebrow">Mayor desk</p>
           <h1>{game.name}</h1>
         </div>
-        <button type="button" className="icon-button" onClick={props.onSave} aria-label={`Save ${game.name}`} title={`Save ${game.name}`}>
-          <Save size={18} />
-        </button>
+        <div className="hud-title-actions">
+          <button type="button" className="icon-button" onClick={props.onSave} aria-label={`Save ${game.name}`} title={`Save ${game.name}`}>
+            <Save size={18} />
+          </button>
+          <button type="button" className="icon-button" onClick={props.onMenu} aria-label="Return to main menu" title="Return to main menu">
+            <Home size={18} />
+          </button>
+        </div>
       </div>
       <div className="stats-grid">
         <span>People <strong>{stats?.population}/{stats?.housingCapacity}</strong></span>
@@ -53,7 +58,7 @@ export function GameHud(props: GameHudProps) {
       <p className="status">{message}</p>
       <div className="footer-actions">
         <button type="button" onClick={props.onLoad}>Load</button>
-        <button type="button" onClick={props.onMenu}>Menu</button>
+        <button type="button" onClick={props.onMenu}>Main Menu</button>
       </div>
     </aside>
   );

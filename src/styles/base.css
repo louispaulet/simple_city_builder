@@ -34,6 +34,7 @@ button {
 .footer-actions button,
 .dialog-header button,
 .dialog-actions button,
+.confirm-actions button,
 .back-button,
 .about-actions button {
   min-height: 44px;

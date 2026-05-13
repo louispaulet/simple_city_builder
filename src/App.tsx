@@ -2,6 +2,7 @@ import { CityScene } from './components/CityScene';
 import { AboutPage } from './ui/AboutPage';
 import { GameHud } from './ui/GameHud';
 import { MainMenu } from './ui/MainMenu';
+import { MainMenuConfirmPanel } from './ui/MainMenuConfirmPanel';
 import { NewCityPanel } from './ui/NewCityPanel';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { useGameController } from './ui/useGameController';
@@ -55,7 +56,7 @@ export default function App() {
         bankOpen={controller.bankOpen}
         onSave={controller.handleSave}
         onLoad={controller.openSaves}
-        onMenu={() => controller.setGame(undefined)}
+        onMenu={controller.askForMainMenu}
         onSelectTool={controller.setSelectedTool}
         onToggleStats={() => controller.setStatsOpen((open) => !open)}
         onToggleBank={() => controller.setBankOpen((open) => !open)}
@@ -64,6 +65,14 @@ export default function App() {
       />
       {controller.showSaves && (
         <SaveLoadPanel saves={controller.saves} onLoad={controller.loadSave} onClose={() => controller.setShowSaves(false)} />
+      )}
+      {controller.showMenuConfirm && (
+        <MainMenuConfirmPanel
+          game={controller.game}
+          onSaveAndReturn={controller.saveAndReturnToMainMenu}
+          onReturnWithoutSaving={controller.returnToMainMenu}
+          onCancel={() => controller.setShowMenuConfirm(false)}
+        />
       )}
     </main>
   );

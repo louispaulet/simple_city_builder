@@ -27,6 +27,12 @@
   gap: 16px;
 }
 
+.hud-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .hud h1,
 .dialog h2 {
   margin: 0;
