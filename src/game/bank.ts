@@ -1,4 +1,5 @@
 import type { GameState } from './types';
+import { formatMoneyValue } from './money';
 
 export interface BankResult {
   state: GameState;
@@ -13,7 +14,7 @@ export const borrowMoney = (state: GameState, amount: number): BankResult => {
 
   return {
     ok: true,
-    message: `Borrowed ${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}.`,
+    message: `Borrowed ${formatMoneyValue(amount)}.`,
     state: {
       ...state,
       money: state.money + amount,
@@ -35,7 +36,7 @@ export const repayDebt = (state: GameState, amount: number): BankResult => {
 
   return {
     ok: true,
-    message: `Repaid ${payment.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}.`,
+    message: `Repaid ${formatMoneyValue(payment)}.`,
     state: {
       ...state,
       money: state.money - payment,

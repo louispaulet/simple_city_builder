@@ -1,6 +1,17 @@
 import { createMap } from './terrain';
 import type { GameState } from './types';
 
+const emptyTick = () => ({
+  rentIncome: 0,
+  wagesPaid: 0,
+  payrollTaxIncome: 0,
+  restaurantSpending: 0,
+  foodTaxIncome: 0,
+  barSpending: 0,
+  barTaxIncome: 0,
+  interestPaid: 0,
+});
+
 export const createNewGame = (seed = Math.floor(Math.random() * 100_000), name = 'New City'): GameState => {
   const now = Date.now();
   const map = createMap(seed);
@@ -19,16 +30,7 @@ export const createNewGame = (seed = Math.floor(Math.random() * 100_000), name =
     ],
     citizens: [],
     money: 1800,
-    lastTick: {
-      rentIncome: 0,
-      wagesPaid: 0,
-      payrollTaxIncome: 0,
-      restaurantSpending: 0,
-      foodTaxIncome: 0,
-      barSpending: 0,
-      barTaxIncome: 0,
-      interestPaid: 0,
-    },
+    lastTick: emptyTick(),
     loanBalance: 0,
     accruedInterest: 0,
     tick: 0,
