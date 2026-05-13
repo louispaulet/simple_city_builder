@@ -94,7 +94,9 @@ button {
 
 .menu-actions button,
 .footer-actions button,
-.dialog-header button {
+.dialog-header button,
+.back-button,
+.about-actions button {
   min-height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 8px;
@@ -106,9 +108,109 @@ button {
   box-shadow: 0 12px 36px rgba(10, 30, 26, 0.2);
 }
 
+.menu-actions .secondary-action,
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-actions .secondary-action {
+  color: #f8fff9;
+  background: rgba(16, 32, 24, 0.28);
+}
+
 .menu-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
+}
+
+.about-shell {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: auto;
+  padding: 24px;
+  background:
+    linear-gradient(rgba(18, 32, 22, 0.58), rgba(18, 32, 22, 0.2)),
+    linear-gradient(135deg, #7fac93 0%, #95c5cf 48%, #4d7a52 100%);
+}
+
+.about-page {
+  width: min(1060px, 100%);
+  min-height: calc(100vh - 48px);
+  display: grid;
+  align-content: center;
+  gap: 26px;
+  margin: 0 auto;
+  color: #f8fff9;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.36);
+}
+
+.back-button {
+  justify-self: start;
+  color: #102018;
+  background: #f5fff2;
+}
+
+.about-hero {
+  max-width: 760px;
+}
+
+.about-hero h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 7vw, 5.6rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.about-hero p {
+  max-width: 680px;
+  margin: 18px 0 0;
+  font-size: clamp(1rem, 2vw, 1.22rem);
+  line-height: 1.58;
+}
+
+.about-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  text-shadow: none;
+}
+
+.about-feature-grid article {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 8px;
+  background: rgba(248, 251, 244, 0.92);
+  color: #17251c;
+  box-shadow: 0 18px 46px rgba(10, 30, 26, 0.18);
+}
+
+.about-feature-grid svg {
+  color: #315eaa;
+}
+
+.about-feature-grid h2 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.about-feature-grid p {
+  margin: 0;
+  color: #4d5d51;
+  line-height: 1.48;
+}
+
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.about-actions button {
+  cursor: pointer;
 }
 
 .game-shell {
@@ -313,6 +415,20 @@ button {
 @media (max-width: 720px) {
   body {
     overflow: hidden;
+  }
+
+  .about-shell {
+    padding: 18px;
+  }
+
+  .about-page {
+    min-height: calc(100vh - 36px);
+    align-content: start;
+    padding: 8px 0 24px;
+  }
+
+  .about-feature-grid {
+    grid-template-columns: 1fr;
   }
 
   .hud {

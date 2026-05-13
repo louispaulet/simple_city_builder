@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BriefcaseBusiness, Car, CircleDollarSign, Home, MapPin, Save, Soup, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  Building2,
+  Car,
+  CircleDollarSign,
+  Home,
+  Info,
+  MapPin,
+  Save,
+  Soup,
+  Sprout,
+  Trash2,
+} from 'lucide-react';
 import { CityScene } from './components/CityScene';
 import { createNewGame } from './game/createGame';
 import { deleteAt, placeBuilding, placeRoad } from './game/placement';
@@ -22,11 +35,13 @@ function MainMenu({
   onNewGame,
   onResume,
   onLoad,
+  onAbout,
   canResume,
 }: {
   onNewGame: () => void;
   onResume: () => void;
   onLoad: () => void;
+  onAbout: () => void;
   canResume: boolean;
 }) {
   return (
@@ -41,6 +56,54 @@ function MainMenu({
           <button type="button" onClick={onNewGame}>New Game</button>
           <button type="button" onClick={onResume} disabled={!canResume}>Resume</button>
           <button type="button" onClick={onLoad}>Load Game</button>
+          <button type="button" className="secondary-action" onClick={onAbout}>
+            <Info size={18} />
+            About
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function AboutPage({ onBack, onNewGame }: { onBack: () => void; onNewGame: () => void }) {
+  return (
+    <main className="about-shell">
+      <section className="about-page" aria-labelledby="about-title">
+        <button type="button" className="back-button" onClick={onBack}>
+          <ArrowLeft size={18} />
+          Menu
+        </button>
+
+        <div className="about-hero">
+          <p className="eyebrow">About the game</p>
+          <h1 id="about-title">Build a city that actually connects.</h1>
+          <p>
+            Simple City Builder is a small 3D browser strategy game about making practical civic choices:
+            roads, homes, jobs, food, and the fragile budget that keeps everything moving.
+          </p>
+        </div>
+
+        <div className="about-feature-grid" aria-label="Game highlights">
+          <article>
+            <Building2 size={24} />
+            <h2>Grow With Intent</h2>
+            <p>Place homes, workplaces, restaurants, and roads where they make sense instead of filling every tile.</p>
+          </article>
+          <article>
+            <MapPin size={24} />
+            <h2>Connect The Region</h2>
+            <p>Link neighborhoods back to the regional marker to attract residents and keep the city useful.</p>
+          </article>
+          <article>
+            <Sprout size={24} />
+            <h2>Keep It Light</h2>
+            <p>Save locally, experiment quickly, and watch the simulation tick along without heavy setup.</p>
+          </article>
+        </div>
+
+        <div className="about-actions">
+          <button type="button" onClick={onNewGame}>Start Building</button>
         </div>
       </section>
     </main>
@@ -82,6 +145,7 @@ function SaveLoadPanel({
 
 export default function App() {
   const [game, setGame] = useState<GameState | undefined>(() => loadActiveGame());
+  const [page, setPage] = useState<'menu' | 'about'>('menu');
   const [selectedTool, setSelectedTool] = useState<ToolKind>('road');
   const [message, setMessage] = useState('Connect homes to the regional marker with roads to attract people.');
   const [showSaves, setShowSaves] = useState(false);
@@ -114,6 +178,7 @@ export default function App() {
     setGame(next);
     setSelectedTool('road');
     setMessage('Start by extending a road from the regional marker, then place houses nearby.');
+    setPage('menu');
     saveGame(next);
     setSaves(listSaves());
   };
@@ -123,6 +188,7 @@ export default function App() {
     if (active) {
       setGame(active);
       setShowSaves(false);
+      setPage('menu');
     }
   };
 
@@ -136,6 +202,7 @@ export default function App() {
     if (loaded) {
       setGame(loaded);
       setShowSaves(false);
+      setPage('menu');
       setMessage('City loaded.');
     }
   };
@@ -166,7 +233,17 @@ export default function App() {
   if (!game) {
     return (
       <>
-        <MainMenu onNewGame={startNewGame} onResume={resume} onLoad={openSaves} canResume={saves.length > 0} />
+        {page === 'about' ? (
+          <AboutPage onBack={() => setPage('menu')} onNewGame={startNewGame} />
+        ) : (
+          <MainMenu
+            onNewGame={startNewGame}
+            onResume={resume}
+            onLoad={openSaves}
+            onAbout={() => setPage('about')}
+            canResume={saves.length > 0}
+          />
+        )}
         {showSaves && <SaveLoadPanel saves={saves} onLoad={loadSave} onClose={() => setShowSaves(false)} />}
       </>
     );
