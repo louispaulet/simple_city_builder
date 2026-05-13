@@ -1,22 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
+  Beer,
   BriefcaseBusiness,
   Building2,
   Car,
   CircleDollarSign,
+  Dumbbell,
   Home,
   Info,
+  Landmark,
   MapPin,
   Save,
+  Smile,
   Sparkles,
   Soup,
   Sprout,
+  Trees,
   Trash2,
 } from 'lucide-react';
 import { CityScene } from './components/CityScene';
+import { borrowMoney, repayDebt } from './game/bank';
 import { createNewGame } from './game/createGame';
-import { deleteAt, placeBuilding, placeRoad } from './game/placement';
+import { deleteAt, placeBuilding, placeRoadLine } from './game/placement';
 import { listSaves, loadActiveGame, loadGame, saveGame } from './game/save';
 import { getStats, simulateTick } from './game/simulation';
 import type { GameState, Position, SaveSlot, ToolKind } from './game/types';
@@ -26,8 +32,12 @@ const tools: Array<{ id: ToolKind; label: string; icon: typeof Home }> = [
   { id: 'workplace', label: 'Workplace', icon: BriefcaseBusiness },
   { id: 'road', label: 'Road', icon: Car },
   { id: 'restaurant', label: 'Restaurant', icon: Soup },
+  { id: 'bar', label: 'Bar', icon: Beer },
+  { id: 'park', label: 'Park', icon: Trees },
   { id: 'delete', label: 'Delete', icon: Trash2 },
 ];
+
+const loanAmounts = [500, 1000, 2500];
 
 const formatMoney = (value: number): string =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
@@ -203,6 +213,8 @@ export default function App() {
   const [showSaves, setShowSaves] = useState(false);
   const [showNewCity, setShowNewCity] = useState(false);
   const [cityNameDraft, setCityNameDraft] = useState('');
+  const [statsOpen, setStatsOpen] = useState(true);
+  const [bankOpen, setBankOpen] = useState(false);
   const [saves, setSaves] = useState<SaveSlot[]>(() => listSaves());
   const stats = useMemo(() => (game ? getStats(game) : undefined), [game]);
 
@@ -290,7 +302,7 @@ export default function App() {
 
       const result =
         selectedTool === 'road'
-          ? placeRoad(game, position)
+          ? placeRoadLine(game, position, position)
           : selectedTool === 'delete'
             ? deleteAt(game, position)
             : selectedTool === 'inspect'
@@ -304,6 +316,45 @@ export default function App() {
     },
     [game, selectedTool],
   );
+
+  const handleRoadLineSelected = useCallback(
+    (start: Position, end: Position) => {
+      if (!game) {
+        return;
+      }
+
+      const result = placeRoadLine(game, start, end);
+      setMessage(result.message);
+      if (result.ok) {
+        setGame(result.state);
+      }
+    },
+    [game],
+  );
+
+  const handleBorrow = (amount: number) => {
+    if (!game) {
+      return;
+    }
+
+    const result = borrowMoney(game, amount);
+    setMessage(result.message);
+    if (result.ok) {
+      setGame(result.state);
+    }
+  };
+
+  const handleRepay = (amount: number) => {
+    if (!game) {
+      return;
+    }
+
+    const result = repayDebt(game, amount);
+    setMessage(result.message);
+    if (result.ok) {
+      setGame(result.state);
+    }
+  };
 
   if (!game) {
     return (
@@ -334,7 +385,7 @@ export default function App() {
 
   return (
     <main className="game-shell">
-      <CityScene game={game} onTileSelected={handleTileSelected} />
+      <CityScene game={game} isRoadTool={selectedTool === 'road'} onTileSelected={handleTileSelected} onRoadLineSelected={handleRoadLineSelected} />
       <aside className="hud">
         <div className="hud-title">
           <div>
@@ -353,17 +404,75 @@ export default function App() {
           <span>Funds <strong>{formatMoney(stats?.money ?? 0)}</strong></span>
         </div>
 
-        <div className="economy-line">
-          <CircleDollarSign size={16} />
-          <span>Rent +{formatMoney(stats?.rentIncome ?? 0)}</span>
-          <span>Payroll tax +{formatMoney(stats?.payrollTaxIncome ?? 0)}</span>
-          <span>Food tax +{formatMoney(stats?.foodTaxIncome ?? 0)}</span>
+        <div className="status-bars" aria-label="Citizen wellbeing">
+          <div>
+            <span><Smile size={15} /> Happiness</span>
+            <strong>{stats?.happiness ?? 0}</strong>
+            <meter min={0} max={100} value={stats?.happiness ?? 0} />
+          </div>
+          <div>
+            <span><Dumbbell size={15} /> Fitness</span>
+            <strong>{stats?.fitness ?? 0}</strong>
+            <meter min={0} max={100} value={stats?.fitness ?? 0} />
+          </div>
         </div>
 
         <div className={`connection ${stats?.connectedToRegion ? 'connected' : ''}`}>
           <MapPin size={16} />
           {stats?.connectedToRegion ? 'Homes connected to the region' : 'Connect houses to the regional marker'}
         </div>
+
+        <section className="collapsible-panel">
+          <button type="button" className="panel-toggle" onClick={() => setStatsOpen((open) => !open)} aria-expanded={statsOpen}>
+            <CircleDollarSign size={17} />
+            Stats
+            <strong>{formatMoney(stats?.netChange ?? 0)}/tick</strong>
+          </button>
+          {statsOpen && (
+            <div className="panel-body">
+              <div className="mini-grid">
+                <span>Bars <strong>{stats?.bars}</strong></span>
+                <span>Parks <strong>{stats?.parks}</strong></span>
+                <span>Income <strong>{formatMoney(stats?.totalIncome ?? 0)}</strong></span>
+                <span>Expense <strong>{formatMoney(stats?.totalExpenses ?? 0)}</strong></span>
+              </div>
+              <div className="ledger">
+                <span>Rent <strong>+{formatMoney(stats?.rentIncome ?? 0)}</strong></span>
+                <span>Payroll tax <strong>+{formatMoney(stats?.payrollTaxIncome ?? 0)}</strong></span>
+                <span>Food tax <strong>+{formatMoney(stats?.foodTaxIncome ?? 0)}</strong></span>
+                <span>Bar tax <strong>+{formatMoney(stats?.barTaxIncome ?? 0)}</strong></span>
+                <span>Interest <strong>-{formatMoney(stats?.interestPaid ?? 0)}</strong></span>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="collapsible-panel">
+          <button type="button" className="panel-toggle" onClick={() => setBankOpen((open) => !open)} aria-expanded={bankOpen}>
+            <Landmark size={17} />
+            Bank
+            <strong>{formatMoney((stats?.loanBalance ?? 0) + (stats?.accruedInterest ?? 0))}</strong>
+          </button>
+          {bankOpen && (
+            <div className="panel-body">
+              <div className="mini-grid">
+                <span>Principal <strong>{formatMoney(stats?.loanBalance ?? 0)}</strong></span>
+                <span>Interest <strong>{formatMoney(stats?.accruedInterest ?? 0)}</strong></span>
+              </div>
+              <div className="bank-actions">
+                {loanAmounts.map((amount) => (
+                  <button type="button" key={amount} onClick={() => handleBorrow(amount)}>Borrow {formatMoney(amount)}</button>
+                ))}
+                <button type="button" disabled={(stats?.loanBalance ?? 0) + (stats?.accruedInterest ?? 0) <= 0} onClick={() => handleRepay(500)}>
+                  Repay {formatMoney(500)}
+                </button>
+                <button type="button" disabled={(stats?.loanBalance ?? 0) + (stats?.accruedInterest ?? 0) <= 0} onClick={() => handleRepay(Number.POSITIVE_INFINITY)}>
+                  Repay Max
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
 
         <div className="tool-grid" aria-label="Build tools">
           {tools.map((tool) => {

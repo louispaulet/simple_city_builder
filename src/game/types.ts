@@ -1,5 +1,6 @@
 export type TileKind = 'land' | 'water';
-export type BuildingKind = 'house' | 'workplace' | 'restaurant';
+export type BuildingKind = 'house' | 'workplace' | 'restaurant' | 'bar' | 'park';
+export type BuildingVariant = 0 | 1 | 2 | 3;
 export type ToolKind = BuildingKind | 'road' | 'inspect' | 'delete';
 export type CommuteMode = 'foot' | 'car';
 
@@ -15,6 +16,7 @@ export interface Tile extends Position {
 export interface Building extends Position {
   id: string;
   kind: BuildingKind;
+  variant: BuildingVariant;
 }
 
 export interface Road extends Position {
@@ -27,8 +29,12 @@ export interface Citizen {
   homeId: string;
   workplaceId?: string;
   restaurantId?: string;
+  barId?: string;
+  parkId?: string;
   mode: CommuteMode;
   money: number;
+  happiness: number;
+  fitness: number;
 }
 
 export interface EconomyTick {
@@ -37,6 +43,9 @@ export interface EconomyTick {
   payrollTaxIncome: number;
   restaurantSpending: number;
   foodTaxIncome: number;
+  barSpending: number;
+  barTaxIncome: number;
+  interestPaid: number;
 }
 
 export interface GameMap {
@@ -55,6 +64,8 @@ export interface GameState {
   roads: Road[];
   citizens: Citizen[];
   money: number;
+  loanBalance: number;
+  accruedInterest: number;
   lastTick: EconomyTick;
   tick: number;
   createdAt: number;
@@ -66,13 +77,25 @@ export interface GameStats {
   housingCapacity: number;
   jobs: number;
   restaurants: number;
+  bars: number;
+  parks: number;
   employed: number;
   connectedToRegion: boolean;
+  happiness: number;
+  fitness: number;
   rentIncome: number;
   wagesPaid: number;
   payrollTaxIncome: number;
   restaurantSpending: number;
   foodTaxIncome: number;
+  barSpending: number;
+  barTaxIncome: number;
+  interestPaid: number;
+  totalIncome: number;
+  totalExpenses: number;
+  netChange: number;
+  loanBalance: number;
+  accruedInterest: number;
   money: number;
 }
 
@@ -85,7 +108,7 @@ export interface SaveSlot {
 }
 
 export interface SerializedGame {
-  version: 2;
+  version: 3;
   state: GameState;
 }
 
@@ -110,6 +133,21 @@ export const BUILDING_RULES = {
     foodTax: 1,
     cost: 220,
   },
+  bar: {
+    label: 'Bar',
+    seats: 12,
+    spend: 6,
+    barTax: 2,
+    happinessGain: 8,
+    cost: 260,
+  },
+  park: {
+    label: 'Park',
+    capacity: 18,
+    fitnessGain: 7,
+    cost: 160,
+  },
 } as const;
 
 export const ROAD_COST = 35;
+export const LOAN_INTEREST_RATE = 0.015;

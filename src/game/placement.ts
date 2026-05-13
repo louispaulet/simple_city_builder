@@ -1,6 +1,6 @@
-import { samePosition } from './grid';
+import { posKey, samePosition } from './grid';
 import { getTile } from './terrain';
-import { BUILDING_RULES, ROAD_COST, type BuildingKind, type GameState, type Position } from './types';
+import { BUILDING_RULES, ROAD_COST, type BuildingKind, type BuildingVariant, type GameState, type Position } from './types';
 
 export interface PlacementResult {
   state: GameState;
@@ -14,6 +14,11 @@ const occupiedByBuilding = (state: GameState, position: Position): boolean =>
   state.buildings.some((building) => samePosition(building, position));
 
 const occupiedByRoad = (state: GameState, position: Position): boolean => state.roads.some((road) => samePosition(road, position));
+
+export const buildingVariantFor = (state: GameState, kind: BuildingKind, position: Position): BuildingVariant => {
+  const value = Math.sin(state.map.seed * 17.17 + position.x * 41.31 + position.z * 73.73 + kind.length * 11.11) * 10000;
+  return Math.abs(Math.floor(value)) % 4 as BuildingVariant;
+};
 
 export const canPlaceBuilding = (state: GameState, kind: BuildingKind, position: Position): { ok: boolean; message: string } => {
   const tile = getTile(state.map, position);
@@ -47,7 +52,7 @@ export const placeBuilding = (state: GameState, kind: BuildingKind, position: Po
     message: `${BUILDING_RULES[kind].label} placed.`,
     state: {
       ...state,
-      buildings: [...state.buildings, { id: nextId(kind, state), kind, ...position }],
+      buildings: [...state.buildings, { id: nextId(kind, state), kind, variant: buildingVariantFor(state, kind, position), ...position }],
       money: state.money - BUILDING_RULES[kind].cost,
       updatedAt: now,
     },
@@ -85,6 +90,68 @@ export const placeRoad = (state: GameState, position: Position): PlacementResult
       money: state.money - ROAD_COST,
       updatedAt: now,
     },
+  };
+};
+
+export const roadLinePositions = (start: Position, end: Position): Position[] => {
+  const useX = Math.abs(end.x - start.x) >= Math.abs(end.z - start.z);
+  const positions: Position[] = [];
+
+  if (useX) {
+    const step = start.x <= end.x ? 1 : -1;
+    for (let x = start.x; x !== end.x + step; x += step) {
+      positions.push({ x, z: start.z });
+    }
+    return positions;
+  }
+
+  const step = start.z <= end.z ? 1 : -1;
+  for (let z = start.z; z !== end.z + step; z += step) {
+    positions.push({ x: start.x, z });
+  }
+  return positions;
+};
+
+export const placeRoadLine = (state: GameState, start: Position, end: Position): PlacementResult => {
+  let next = state;
+  let placed = 0;
+  let bridges = 0;
+  let stopMessage = '';
+  const seen = new Set<string>();
+
+  for (const position of roadLinePositions(start, end)) {
+    const key = posKey(position);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+
+    if (occupiedByRoad(next, position)) {
+      continue;
+    }
+
+    const result = placeRoad(next, position);
+    if (!result.ok) {
+      stopMessage = result.message;
+      break;
+    }
+
+    const road = result.state.roads.at(-1);
+    placed += 1;
+    bridges += road?.bridge ? 1 : 0;
+    next = result.state;
+  }
+
+  if (placed === 0) {
+    return { state, ok: false, message: stopMessage || 'No new road tiles placed.' };
+  }
+
+  const roadLabel = placed === 1 ? 'tile' : 'tiles';
+  const bridgeLabel = bridges > 0 ? ` including ${bridges} bridge ${bridges === 1 ? 'tile' : 'tiles'}` : '';
+  return {
+    state: next,
+    ok: true,
+    message: `Placed ${placed} road ${roadLabel}${bridgeLabel}.${stopMessage ? ` Stopped: ${stopMessage}` : ''}`,
   };
 };
 

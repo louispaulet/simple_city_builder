@@ -1,6 +1,6 @@
 import { distance } from './grid';
 import { findRoadPath, isConnectedToMap } from './pathfinding';
-import { BUILDING_RULES, type Building, type Citizen, type GameState, type GameStats } from './types';
+import { BUILDING_RULES, LOAN_INTEREST_RATE, type Building, type Citizen, type GameState, type GameStats } from './types';
 
 export const housingCapacity = (state: GameState): number =>
   state.buildings.filter((building) => building.kind === 'house').length * BUILDING_RULES.house.capacity;
@@ -24,10 +24,14 @@ const assignCitizen = (state: GameState, citizen: Citizen): Citizen => {
 
   const workplace = nearestReachable(state, home, buildingsByKind(state, 'workplace'));
   const restaurant = nearestReachable(state, home, buildingsByKind(state, 'restaurant'));
+  const bar = nearestReachable(state, home, buildingsByKind(state, 'bar'));
+  const park = nearestReachable(state, home, buildingsByKind(state, 'park'));
   return {
     ...citizen,
     workplaceId: workplace?.id,
     restaurantId: restaurant?.id,
+    barId: bar?.id,
+    parkId: park?.id,
     mode: workplace && distance(home, workplace) > 6 ? 'car' : 'foot',
   };
 };
@@ -53,8 +57,12 @@ const createCitizen = (state: GameState, index: number): Citizen | undefined => 
     homeId: home.id,
     mode: 'foot',
     money: 60,
+    happiness: 62,
+    fitness: 58,
   });
 };
+
+const clampStatus = (value: number): number => Math.min(100, Math.max(0, Math.round(value)));
 
 export const simulateTick = (state: GameState): GameState => {
   const connectedToRegion = state.buildings.some((building) => building.kind === 'house' && isConnectedToMap(state, building));
@@ -76,9 +84,13 @@ export const simulateTick = (state: GameState): GameState => {
   let payrollTaxIncome = 0;
   let restaurantSpending = 0;
   let foodTaxIncome = 0;
+  let barSpending = 0;
+  let barTaxIncome = 0;
 
   citizens = citizens.map((citizen) => {
     let citizenMoney = citizen.money;
+    let happiness = citizen.happiness;
+    let fitness = citizen.fitness;
 
     if (citizen.workplaceId) {
       citizenMoney += BUILDING_RULES.workplace.wage;
@@ -96,19 +108,41 @@ export const simulateTick = (state: GameState): GameState => {
       foodTaxIncome += BUILDING_RULES.restaurant.foodTax;
     }
 
+    if (citizen.barId && citizenMoney >= BUILDING_RULES.bar.spend) {
+      citizenMoney -= BUILDING_RULES.bar.spend;
+      happiness += BUILDING_RULES.bar.happinessGain;
+      barSpending += BUILDING_RULES.bar.spend;
+      barTaxIncome += BUILDING_RULES.bar.barTax;
+    } else {
+      happiness -= 2;
+    }
+
+    if (citizen.parkId) {
+      fitness += BUILDING_RULES.park.fitnessGain;
+    } else {
+      fitness -= 1;
+    }
+
     return {
       ...citizen,
       money: citizenMoney,
+      happiness: clampStatus(happiness),
+      fitness: clampStatus(fitness),
     };
   });
 
-  const money = state.money + rentIncome + payrollTaxIncome + foodTaxIncome;
+  const newInterest = state.loanBalance > 0 ? Math.ceil(state.loanBalance * LOAN_INTEREST_RATE) : 0;
+  const availableForInterest = state.money + rentIncome + payrollTaxIncome + foodTaxIncome + barTaxIncome;
+  const interestDue = state.accruedInterest + newInterest;
+  const interestPaid = Math.min(availableForInterest, interestDue);
+  const money = availableForInterest - interestPaid;
 
   return {
     ...state,
     citizens,
     money,
-    lastTick: { rentIncome, wagesPaid, payrollTaxIncome, restaurantSpending, foodTaxIncome },
+    accruedInterest: interestDue - interestPaid,
+    lastTick: { rentIncome, wagesPaid, payrollTaxIncome, restaurantSpending, foodTaxIncome, barSpending, barTaxIncome, interestPaid },
     tick: state.tick + 1,
     updatedAt: Date.now(),
   };
@@ -116,18 +150,33 @@ export const simulateTick = (state: GameState): GameState => {
 
 export const getStats = (state: GameState): GameStats => {
   const connectedToRegion = state.buildings.some((building) => building.kind === 'house' && isConnectedToMap(state, building));
+  const average = (values: number[]): number => values.length === 0 ? 0 : Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  const totalIncome = state.lastTick.rentIncome + state.lastTick.payrollTaxIncome + state.lastTick.foodTaxIncome + state.lastTick.barTaxIncome;
+  const totalExpenses = state.lastTick.interestPaid;
   return {
     population: state.citizens.length,
     housingCapacity: housingCapacity(state),
     jobs: jobCapacity(state),
     restaurants: buildingsByKind(state, 'restaurant').length,
+    bars: buildingsByKind(state, 'bar').length,
+    parks: buildingsByKind(state, 'park').length,
     employed: state.citizens.filter((citizen) => citizen.workplaceId).length,
     connectedToRegion,
+    happiness: average(state.citizens.map((citizen) => citizen.happiness)),
+    fitness: average(state.citizens.map((citizen) => citizen.fitness)),
     rentIncome: state.lastTick.rentIncome,
     wagesPaid: state.lastTick.wagesPaid,
     payrollTaxIncome: state.lastTick.payrollTaxIncome,
     restaurantSpending: state.lastTick.restaurantSpending,
     foodTaxIncome: state.lastTick.foodTaxIncome,
+    barSpending: state.lastTick.barSpending,
+    barTaxIncome: state.lastTick.barTaxIncome,
+    interestPaid: state.lastTick.interestPaid,
+    totalIncome,
+    totalExpenses,
+    netChange: totalIncome - totalExpenses,
+    loanBalance: state.loanBalance,
+    accruedInterest: state.accruedInterest,
     money: state.money,
   };
 };
