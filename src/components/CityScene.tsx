@@ -85,6 +85,47 @@ const createPeopleAndCars = (scene: Scene, game: GameState, root: TransformNode)
   });
 };
 
+const createCityContent = (scene: Scene, game: GameState): TransformNode => {
+  const content = new TransformNode('city-content', scene);
+  content.setEnabled(false);
+
+  const landMaterial = makeMaterial(scene, 'land-material', new Color3(0.34, 0.56, 0.31));
+  const waterMaterial = makeMaterial(scene, 'water-material', new Color3(0.18, 0.48, 0.71), 0.86);
+  const roadMaterial = makeMaterial(scene, 'road-material', new Color3(0.14, 0.15, 0.15));
+  const bridgeMaterial = makeMaterial(scene, 'bridge-material', new Color3(0.56, 0.45, 0.34));
+  const connectionMaterial = makeMaterial(scene, 'connection-material', new Color3(0.93, 0.91, 0.72));
+
+  for (const tile of game.map.tiles) {
+    const ground = MeshBuilder.CreateBox(`tile-${tile.x}-${tile.z}`, { width: 1.96, depth: 1.96, height: 0.08 }, scene);
+    const world = toWorld(game, tile);
+    ground.position = new Vector3(world.x, tile.kind === 'water' ? -0.09 : 0, world.z);
+    ground.material = tile.kind === 'water' ? waterMaterial : landMaterial;
+    ground.metadata = { tile: { x: tile.x, z: tile.z } };
+    ground.parent = content;
+  }
+
+  for (const road of game.roads) {
+    const mesh = MeshBuilder.CreateBox(`road-${road.id}`, { width: 1.62, depth: 1.62, height: road.bridge ? 0.2 : 0.12 }, scene);
+    const world = toWorld(game, road);
+    mesh.position = new Vector3(world.x, road.bridge ? 0.16 : 0.12, world.z);
+    mesh.material = road.bridge ? bridgeMaterial : roadMaterial;
+    mesh.metadata = { tile: { x: road.x, z: road.z } };
+    mesh.parent = content;
+  }
+
+  const connection = MeshBuilder.CreateCylinder('map-connection', { diameter: 1.7, height: 0.22, tessellation: 6 }, scene);
+  const connectionWorld = toWorld(game, game.map.connection);
+  connection.position = new Vector3(connectionWorld.x, 0.28, connectionWorld.z);
+  connection.material = connectionMaterial;
+  connection.metadata = { tile: game.map.connection };
+  connection.parent = content;
+
+  createBuildingMesh(scene, game, content);
+  createPeopleAndCars(scene, game, content);
+
+  return content;
+};
+
 export function CityScene({ game, onTileSelected }: CitySceneProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<Scene | null>(null);
@@ -116,7 +157,7 @@ export function CityScene({ game, onTileSelected }: CitySceneProps) {
     const light = new HemisphericLight('sun', new Vector3(0.3, 1, 0.2), scene);
     light.intensity = 0.92;
 
-    const content = new TransformNode('city-content', scene);
+    const content = new TransformNode('city-content-placeholder', scene);
     contentRef.current = content;
 
     scene.onPointerObservable.add((event) => {
@@ -148,42 +189,10 @@ export function CityScene({ game, onTileSelected }: CitySceneProps) {
       return;
     }
 
-    oldContent.getChildMeshes().forEach((mesh) => mesh.dispose());
-    const content = oldContent;
-
-    const landMaterial = makeMaterial(scene, 'land-material', new Color3(0.34, 0.56, 0.31));
-    const waterMaterial = makeMaterial(scene, 'water-material', new Color3(0.18, 0.48, 0.71), 0.86);
-    const roadMaterial = makeMaterial(scene, 'road-material', new Color3(0.14, 0.15, 0.15));
-    const bridgeMaterial = makeMaterial(scene, 'bridge-material', new Color3(0.56, 0.45, 0.34));
-    const connectionMaterial = makeMaterial(scene, 'connection-material', new Color3(0.93, 0.91, 0.72));
-
-    for (const tile of game.map.tiles) {
-      const ground = MeshBuilder.CreateBox(`tile-${tile.x}-${tile.z}`, { width: 1.96, depth: 1.96, height: 0.08 }, scene);
-      const world = toWorld(game, tile);
-      ground.position = new Vector3(world.x, tile.kind === 'water' ? -0.09 : 0, world.z);
-      ground.material = tile.kind === 'water' ? waterMaterial : landMaterial;
-      ground.metadata = { tile: { x: tile.x, z: tile.z } };
-      ground.parent = content;
-    }
-
-    for (const road of game.roads) {
-      const mesh = MeshBuilder.CreateBox(`road-${road.id}`, { width: 1.62, depth: 1.62, height: road.bridge ? 0.2 : 0.12 }, scene);
-      const world = toWorld(game, road);
-      mesh.position = new Vector3(world.x, road.bridge ? 0.16 : 0.12, world.z);
-      mesh.material = road.bridge ? bridgeMaterial : roadMaterial;
-      mesh.metadata = { tile: { x: road.x, z: road.z } };
-      mesh.parent = content;
-    }
-
-    const connection = MeshBuilder.CreateCylinder('map-connection', { diameter: 1.7, height: 0.22, tessellation: 6 }, scene);
-    const connectionWorld = toWorld(game, game.map.connection);
-    connection.position = new Vector3(connectionWorld.x, 0.28, connectionWorld.z);
-    connection.material = connectionMaterial;
-    connection.metadata = { tile: game.map.connection };
-    connection.parent = content;
-
-    createBuildingMesh(scene, game, content);
-    createPeopleAndCars(scene, game, content);
+    const nextContent = createCityContent(scene, game);
+    nextContent.setEnabled(true);
+    contentRef.current = nextContent;
+    oldContent.dispose(false, true);
   }, [game]);
 
   return <canvas ref={canvasRef} className="h-full w-full touch-none" aria-label="3D city map" />;
