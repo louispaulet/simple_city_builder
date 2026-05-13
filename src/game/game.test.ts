@@ -88,6 +88,14 @@ describe('city placement rules', () => {
 });
 
 describe('save format', () => {
+  it('keeps the city name in new games and saves', () => {
+    const state = createNewGame(91, 'Harbor Loop');
+    const serialized = serializeGame(state);
+
+    expect(state.name).toBe('Harbor Loop');
+    expect(deserializeGame(serialized).name).toBe('Harbor Loop');
+  });
+
   it('round trips serialized game state', () => {
     const state = withMoney(createNewGame(91));
     const built = placeBuilding(state, 'restaurant', firstLand(state)).state;

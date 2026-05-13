@@ -95,6 +95,7 @@ button {
 .menu-actions button,
 .footer-actions button,
 .dialog-header button,
+.dialog-actions button,
 .back-button,
 .about-actions button {
   min-height: 44px;
@@ -379,6 +380,53 @@ button {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.city-name-dialog {
+  display: grid;
+  gap: 16px;
+}
+
+.city-name-field {
+  display: grid;
+  gap: 8px;
+  color: #17251c;
+  font-weight: 800;
+}
+
+.city-name-field input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #b9cbb6;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #17251c;
+  font: inherit;
+  font-weight: 700;
+}
+
+.city-name-field input:focus {
+  border-color: #315eaa;
+  outline: 3px solid rgba(49, 94, 170, 0.18);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dialog-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-color: #d1dfcf;
+  box-shadow: none;
+}
+
+.dialog-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .empty {

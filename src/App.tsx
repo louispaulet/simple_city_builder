@@ -9,6 +9,7 @@ import {
   Info,
   MapPin,
   Save,
+  Sparkles,
   Soup,
   Sprout,
   Trash2,
@@ -30,6 +31,8 @@ const tools: Array<{ id: ToolKind; label: string; icon: typeof Home }> = [
 
 const formatMoney = (value: number): string =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+
+const cleanCityName = (name: string): string => name.trim().replace(/\s+/g, ' ');
 
 function MainMenu({
   onNewGame,
@@ -63,6 +66,55 @@ function MainMenu({
         </div>
       </section>
     </main>
+  );
+}
+
+function NewCityPanel({
+  cityName,
+  onCityNameChange,
+  onCreate,
+  onClose,
+}: {
+  cityName: string;
+  onCityNameChange: (name: string) => void;
+  onCreate: () => void;
+  onClose: () => void;
+}) {
+  const isReady = cleanCityName(cityName).length > 0;
+
+  return (
+    <div className="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="new-city-title">
+      <form
+        className="dialog city-name-dialog"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (isReady) {
+            onCreate();
+          }
+        }}
+      >
+        <div className="dialog-header">
+          <h2 id="new-city-title">Name Your City</h2>
+          <button type="button" onClick={onClose}>Close</button>
+        </div>
+        <label className="city-name-field">
+          <span>City name</span>
+          <input
+            autoFocus
+            maxLength={48}
+            value={cityName}
+            onChange={(event) => onCityNameChange(event.target.value)}
+            placeholder="Riverbend"
+          />
+        </label>
+        <div className="dialog-actions">
+          <button type="submit" disabled={!isReady}>
+            <Sparkles size={18} />
+            Create City
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -149,6 +201,8 @@ export default function App() {
   const [selectedTool, setSelectedTool] = useState<ToolKind>('road');
   const [message, setMessage] = useState('Connect homes to the regional marker with roads to attract people.');
   const [showSaves, setShowSaves] = useState(false);
+  const [showNewCity, setShowNewCity] = useState(false);
+  const [cityNameDraft, setCityNameDraft] = useState('');
   const [saves, setSaves] = useState<SaveSlot[]>(() => listSaves());
   const stats = useMemo(() => (game ? getStats(game) : undefined), [game]);
 
@@ -173,12 +227,23 @@ export default function App() {
     setSaves(listSaves());
   }, [game]);
 
+  const askForNewCityName = () => {
+    setCityNameDraft('');
+    setShowNewCity(true);
+  };
+
   const startNewGame = () => {
-    const next = createNewGame();
+    const cityName = cleanCityName(cityNameDraft);
+    if (!cityName) {
+      return;
+    }
+
+    const next = createNewGame(undefined, cityName);
     setGame(next);
     setSelectedTool('road');
     setMessage('Start by extending a road from the regional marker, then place houses nearby.');
     setPage('menu');
+    setShowNewCity(false);
     saveGame(next);
     setSaves(listSaves());
   };
@@ -205,6 +270,16 @@ export default function App() {
       setPage('menu');
       setMessage('City loaded.');
     }
+  };
+
+  const handleSave = () => {
+    if (!game) {
+      return;
+    }
+
+    saveGame(game);
+    setSaves(listSaves());
+    setMessage(`${game.name} saved.`);
   };
 
   const handleTileSelected = useCallback(
@@ -234,14 +309,22 @@ export default function App() {
     return (
       <>
         {page === 'about' ? (
-          <AboutPage onBack={() => setPage('menu')} onNewGame={startNewGame} />
+          <AboutPage onBack={() => setPage('menu')} onNewGame={askForNewCityName} />
         ) : (
           <MainMenu
-            onNewGame={startNewGame}
+            onNewGame={askForNewCityName}
             onResume={resume}
             onLoad={openSaves}
             onAbout={() => setPage('about')}
             canResume={saves.length > 0}
+          />
+        )}
+        {showNewCity && (
+          <NewCityPanel
+            cityName={cityNameDraft}
+            onCityNameChange={setCityNameDraft}
+            onCreate={startNewGame}
+            onClose={() => setShowNewCity(false)}
           />
         )}
         {showSaves && <SaveLoadPanel saves={saves} onLoad={loadSave} onClose={() => setShowSaves(false)} />}
@@ -258,7 +341,7 @@ export default function App() {
             <p className="eyebrow">Mayor desk</p>
             <h1>{game.name}</h1>
           </div>
-          <button type="button" className="icon-button" onClick={() => saveGame(game)} aria-label="Save game" title="Save game">
+          <button type="button" className="icon-button" onClick={handleSave} aria-label={`Save ${game.name}`} title={`Save ${game.name}`}>
             <Save size={18} />
           </button>
         </div>

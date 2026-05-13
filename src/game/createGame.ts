@@ -1,12 +1,12 @@
 import { createMap } from './terrain';
 import type { GameState } from './types';
 
-export const createNewGame = (seed = Math.floor(Math.random() * 100_000)): GameState => {
+export const createNewGame = (seed = Math.floor(Math.random() * 100_000), name = 'New City'): GameState => {
   const now = Date.now();
   const map = createMap(seed);
   return {
     id: `city-${seed}-${now}`,
-    name: 'New City',
+    name,
     map,
     buildings: [],
     roads: [
