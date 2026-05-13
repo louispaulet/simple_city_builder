@@ -9,7 +9,7 @@ up:
 		lsof -ti tcp:$(PORT) | head -n 1 > $(PID_FILE); \
 		echo "Vite is already running at http://localhost:$(PORT)/simple_city_builder/"; \
 	else \
-		(nohup npm run dev -- --port $(PORT) > .vite.log 2>&1 & echo $$! > $(PID_FILE)); \
+		(nohup npm run dev -- --port $(PORT) > .vite.log 2>&1 < /dev/null & echo $$! > $(PID_FILE)); \
 		sleep 1; \
 		lsof -ti tcp:$(PORT) | head -n 1 > $(PID_FILE); \
 		echo "Vite started at http://localhost:$(PORT)/simple_city_builder/"; \
