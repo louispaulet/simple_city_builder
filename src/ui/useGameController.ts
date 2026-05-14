@@ -18,7 +18,7 @@ export const useGameController = () => {
   const [showNewCity, setShowNewCity] = useState(false);
   const [showMenuConfirm, setShowMenuConfirm] = useState(false);
   const [cityNameDraft, setCityNameDraft] = useState('');
-  const [statsOpen, setStatsOpen] = useState(true);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [bankOpen, setBankOpen] = useState(false);
   const [saves, setSaves] = useState<SaveSlot[]>(() => listSaves());
   const stats = useMemo(() => (game ? getStats(game) : undefined), [game]);
