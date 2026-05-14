@@ -1,3 +1,5 @@
+![Simple City Builder gameplay screenshot](./game-screenshot.webp)
+
 # Simple City Builder
 
 A 3D browser city-builder built with Vite, React, TypeScript, TailwindCSS, Babylon.js, and Vitest.
