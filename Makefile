@@ -1,23 +1,52 @@
-PORT ?= 5173
+PORT ?= 4173
 PID_FILE := .vite.pid
+STOP_TIMEOUT ?= 10
 
 .PHONY: up kill build deploy test
 
 up:
 	npm install
-	@if lsof -ti tcp:$(PORT) >/dev/null 2>&1; then \
-		lsof -ti tcp:$(PORT) | head -n 1 > $(PID_FILE); \
-		echo "Vite is already running at http://localhost:$(PORT)/"; \
-	else \
-		(nohup npm run dev -- --port $(PORT) > .vite.log 2>&1 < /dev/null & echo $$! > $(PID_FILE)); \
+	$(MAKE) kill
+	@(nohup npm run dev -- --port $(PORT) > .vite.log 2>&1 < /dev/null & echo $$! > $(PID_FILE))
+	@attempts=0; \
+	until lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; do \
+		attempts=$$((attempts + 1)); \
+		if [ "$$attempts" -ge 20 ]; then \
+			echo "Vite did not start on port $(PORT). See .vite.log for details."; \
+			exit 1; \
+		fi; \
 		sleep 1; \
-		lsof -ti tcp:$(PORT) | head -n 1 > $(PID_FILE); \
-		echo "Vite started at http://localhost:$(PORT)/"; \
-	fi
+	done
+	@lsof -tiTCP:$(PORT) -sTCP:LISTEN | head -n 1 > $(PID_FILE)
+	@echo "Vite started at http://localhost:$(PORT)/"
 
 kill:
-	@pids=$$(lsof -ti tcp:$(PORT) 2>/dev/null || true); \
-	if [ -n "$$pids" ]; then kill $$pids 2>/dev/null || true; fi
+	@pids=$$(lsof -tiTCP:$(PORT) -sTCP:LISTEN 2>/dev/null || true); \
+	if [ -n "$$pids" ]; then \
+		echo "Stopping processes on port $(PORT): $$pids"; \
+		kill $$pids 2>/dev/null || true; \
+		attempts=0; \
+		while [ "$$attempts" -lt "$(STOP_TIMEOUT)" ] && lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; do \
+			attempts=$$((attempts + 1)); \
+			sleep 1; \
+		done; \
+		remaining=$$(lsof -tiTCP:$(PORT) -sTCP:LISTEN 2>/dev/null || true); \
+		if [ -n "$$remaining" ]; then \
+			echo "Force stopping processes on port $(PORT): $$remaining"; \
+			kill -9 $$remaining 2>/dev/null || true; \
+		fi; \
+		attempts=0; \
+		while [ "$$attempts" -lt 5 ] && lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; do \
+			attempts=$$((attempts + 1)); \
+			sleep 1; \
+		done; \
+		if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+			echo "Port $(PORT) is still in use."; \
+			exit 1; \
+		fi; \
+	else \
+		echo "No process listening on port $(PORT)"; \
+	fi
 	@rm -f $(PID_FILE)
 	@echo "Vite stopped"
 

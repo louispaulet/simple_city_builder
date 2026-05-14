@@ -27,7 +27,7 @@ A 3D browser city-builder built with Vite, React, TypeScript, TailwindCSS, Babyl
 make up
 ```
 
-The app runs at [http://localhost:5173/simple_city_builder/](http://localhost:5173/simple_city_builder/).
+The app runs at [http://localhost:4173/simple_city_builder/](http://localhost:4173/simple_city_builder/).
 
 ```bash
 make test
