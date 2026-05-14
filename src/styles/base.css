@@ -1,0 +1,49 @@
+:root {
+  color: #152016;
+  background: #d7e6db;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.menu-actions button,
+.footer-actions button,
+.dialog-header button,
+.dialog-actions button,
+.confirm-actions button,
+.back-button,
+.about-actions button {
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 8px;
+  padding: 0 18px;
+  color: #102018;
+  background: #f5fff2;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 36px rgba(10, 30, 26, 0.2);
+}

@@ -1,0 +1,56 @@
+@media (max-width: 720px) {
+  body {
+    overflow: hidden;
+  }
+
+  .about-shell {
+    padding: 18px;
+  }
+
+  .about-page {
+    min-height: calc(100vh - 36px);
+    align-content: start;
+    padding: 8px 0 24px;
+  }
+
+  .about-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hud {
+    top: auto;
+    bottom: 12px;
+    left: 12px;
+    width: calc(100vw - 24px);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .stats-grid span {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    font-size: 0.72rem;
+  }
+
+  .tool-grid button {
+    min-height: 50px;
+  }
+
+  .tool-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .tool-grid span {
+    display: none;
+  }
+
+  .collapsible-panel:not(:has(.panel-body)) {
+    gap: 0;
+  }
+}
