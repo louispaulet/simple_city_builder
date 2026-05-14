@@ -36,11 +36,11 @@ export function CityScene({ game, isRoadTool, onTileSelected, onRoadLineSelected
     if (!canvas) {
       return undefined;
     }
-    const { engine, scene } = createSceneEngine(canvas);
+    const { engine, scene, camera } = createSceneEngine(canvas);
     sceneRef.current = scene;
     layoutRef.current = new TransformNode('city-layout-placeholder', scene);
     populationRef.current = new TransformNode('city-population-placeholder', scene);
-    wirePointers(scene, roadDragStartRef, isRoadToolRef, onTileSelectedRef, onRoadLineSelectedRef);
+    wirePointers(scene, canvas, camera, roadDragStartRef, isRoadToolRef, onTileSelectedRef, onRoadLineSelectedRef);
     engine.runRenderLoop(() => scene.render());
     const resize = () => engine.resize();
     window.addEventListener('resize', resize);
