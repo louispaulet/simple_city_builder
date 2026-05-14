@@ -74,4 +74,4 @@ flowchart TD
 make deploy
 ```
 
-Deployment uses `gh-pages` and publishes the Vite `dist` folder to GitHub Pages. The Vite base path is configured for `https://louispaulet.github.io/simple_city_builder/`.
+Deployment uses `gh-pages` and publishes the Vite `dist` folder to GitHub Pages with the custom domain `city-builder.thefrenchartist.dev`.

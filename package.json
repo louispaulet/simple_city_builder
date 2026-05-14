@@ -3,14 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "homepage": "https://louispaulet.github.io/simple_city_builder/",
+  "homepage": "http://city-builder.thefrenchartist.dev/",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist --cname city-builder.thefrenchartist.dev"
   },
   "dependencies": {
     "@babylonjs/core": "^8.38.0",
